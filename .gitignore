@@ -157,3 +157,7 @@ vite.config.ts.timestamp-*
 crash.log
 crash.*.log
 tfplan
+
+
+vscode workspace
+*-workspace
