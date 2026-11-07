@@ -74,6 +74,22 @@ curl -X POST http://localhost:8080/api/products \
 
 ## Build and publish versioned Docker Hub images
 
+GitHub Actions builds both images on pushes to `main`, on `v*` version-tag pushes, and on pull requests targeting `main` (build-only; no push). To enable publishing:
+
+1. Create the public Docker Hub repositories `shoplite-frontend` and `shoplite-backend`.
+2. In the GitHub repository, add the Actions **variable** `DOCKERHUB_USERNAME` with your Docker Hub username.
+3. Add the Actions **secret** `DOCKERHUB_TOKEN` with a Docker Hub access token that can push to both repositories.
+4. Push a release tag to publish the version-tagged images:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+For each component, the workflow publishes `v1.0.0` and `sha-<commit>` tags for that release. A push to `main` publishes `main`, `sha-<commit>`, and `latest`. Pull requests build both images for validation without logging in to Docker Hub or publishing. Use the exact version tag (for example `v1.0.0`) in `infra/terraform/terraform.tfvars`; the assignment requirement is satisfied by the release tag, not by `latest`.
+
+### Build and push manually (optional)
+
 Create public Docker Hub repositories named `shoplite-frontend` and `shoplite-backend`. Replace `YOUR_DOCKERHUB_USERNAME` with your own username. Choose a new version for each release; do not rely on the `latest` tag.
 
 ```sh
