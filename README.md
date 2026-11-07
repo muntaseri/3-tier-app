@@ -116,6 +116,8 @@ Edit `terraform.tfvars`:
 
 The password is marked sensitive but is included in Terraform state and EC2 user data so the backend can connect to PostgreSQL. Keep state local and access-restricted, never commit `terraform.tfvars`, state, plans, or user-data output. For a shared deployment, use an encrypted, access-controlled remote state backend and a secret-management design. Changing `db_password` through Terraform replaces the database instance; back up and plan a coordinated credential rotation before changing it because the database volume is attached to that instance.
 
+`terraform init` downloads the AWS provider and prepares the working directory. Then validate, review the plan, and apply:
+
 ```sh
 terraform init
 terraform validate
@@ -123,7 +125,16 @@ terraform plan
 terraform apply
 ```
 
-Save the `frontend_public_ip`, `backend_private_ip`, and `database_private_ip` outputs. Bootstrap installs Docker on all hosts. EC2-1 installs Nginx directly on Ubuntu (not in a container), configures it from [`deploy/nginx/shoplite.conf.tftpl`](deploy/nginx/shoplite.conf.tftpl), and runs the frontend image. EC2-2 runs the API image. EC2-3 runs PostgreSQL with the named volume `shoplite-postgres-data`.
+After apply, display all Terraform outputs and retrieve individual values when needed:
+
+```sh
+terraform output
+terraform output -raw frontend_public_ip
+terraform output -raw backend_private_ip
+terraform output -raw database_private_ip
+```
+
+Use the public IP to open the app and the private IPs for troubleshooting or SSH through the jump host. Bootstrap installs Docker on all hosts. EC2-1 installs Nginx directly on Ubuntu (not in a container), configures it from [`deploy/nginx/shoplite.conf.tftpl`](deploy/nginx/shoplite.conf.tftpl), and runs the frontend image. EC2-2 runs the API image. EC2-3 runs PostgreSQL with the named volume `shoplite-postgres-data`.
 
 ### 3. Verify
 
@@ -175,7 +186,9 @@ Security groups are stateful. No inbound database rule references a public CIDR.
 
 ### Q1. Page loads, but product list is empty and API calls return 502
 
-Start at the failing boundary and move inward. In the browser's network panel, inspect the failing `/api` URL and response. On EC2-1, check `sudo nginx -t`, `sudo systemctl status nginx`, and `sudo tail -n 100 /var/log/nginx/error.log`; verify the Nginx upstream points to EC2-2's current private IP. From EC2-1, test `curl http://BACKEND_PRIVATE_IP:3000/api/health`. On EC2-2, inspect `sudo docker ps`, `sudo docker logs shoplite-backend`, the `shoplite-net` network, and the container's DB host, username, database, and password settings. From EC2-2, test the database's private IP on port 5432. On EC2-3, check the PostgreSQL container, logs, volume, and free disk space. Confirm security-group rules allow only edge-to-backend and backend-to-database traffic. Fix the specific broken hop, then recheck health and products through the public URL; do not expose PostgreSQL to troubleshoot.
+Start at the failing boundary and move inward. In the browser's network panel, inspect the failing `/api` URL and response. If the frontend container is restarting, inspect `sudo docker logs --tail 100 shoplite-frontend`; an Nginx error such as `host not found in upstream "backend"` means the frontend container is trying to resolve the backend by a Docker service name that is unavailable across EC2 hosts. The updated frontend Nginx config resolves that name at request time, while EC2-1's host Nginx sends `/api/*` directly to EC2-2's private IP. Publish and deploy a new frontend image version after applying that fix.
+
+Then on EC2-1 check `sudo nginx -t`, `sudo systemctl status nginx`, and `sudo tail -n 100 /var/log/nginx/error.log`; verify the host Nginx upstream points to EC2-2's current private IP. From EC2-1, test `curl http://BACKEND_PRIVATE_IP:3000/api/health`. On EC2-2, inspect `sudo docker ps`, `sudo docker logs shoplite-backend`, the `shoplite-net` network, and the container's DB host, username, database, and password settings. From EC2-2, test the database's private IP on port 5432. On EC2-3, check the PostgreSQL container, logs, volume, and free disk space. Confirm security-group rules allow only edge-to-backend and backend-to-database traffic. Fix the specific broken hop, then recheck health and products through the public URL; do not expose PostgreSQL to troubleshoot.
 
 ### Q2. How can EC2-3 receive OS patches without breaking the database security rule?
 

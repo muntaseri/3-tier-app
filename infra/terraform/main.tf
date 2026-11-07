@@ -146,7 +146,7 @@ resource "aws_vpc_security_group_ingress_rule" "edge_ssh" {
   from_port         = 22
   to_port           = 22
   ip_protocol       = "tcp"
-  description       = "SSH from the administrator's fixed IP."
+  description       = "SSH from the administrators fixed IP."
 }
 
 resource "aws_vpc_security_group_ingress_rule" "backend_api" {
