@@ -155,17 +155,50 @@ curl http://FRONTEND_PUBLIC_IP/api/products
 
 The health endpoint returns `200` only when the API can query PostgreSQL. A `503` indicates the API is up but the database is not ready or reachable.
 
-For administration, SSH to EC2-1 from the allowed CIDR and use it as a jump host to reach the private instances:
+For administration, keep the EC2 private key on your computer and use SSH `ProxyJump` through EC2-1. Get the addresses from Terraform:
 
 ```sh
-
-ssh -i 3-tier-app.pem ubuntu@184.35.26.65
-ssh -i 3-tier-app.pem -J ubuntu@184.35.26.65 ubuntu@10.20.2.20
-ssh -i 3-tier-app.pem -J ubuntu@184.35.26.65 ubuntu@10.20.2.30
-
+cd infra/terraform
+terraform output -raw frontend_public_ip
+terraform output -raw backend_private_ip
+terraform output -raw database_private_ip
 ```
 
-The edge security group allows outbound SSH only to the backend and database security groups; their inbound SSH rules accept connections only from the edge security group. If this Terraform configuration was updated after the infrastructure was created, run `terraform apply` from `infra/terraform` to add these rules before using `ProxyJump`. Keep the private key on your computer; do not copy it to EC2-1. The key pair selected by `key_name` must also be attached to the private instances.
+Append these entries to `~/.ssh/config`, replacing the example key path with the path to your EC2 `.pem` key and the public IP with the `frontend_public_ip` output. The private addresses below match the Terraform defaults; use the output values if they differ.
+
+```sshconfig
+Host shoplite-edge
+    HostName FRONTEND_PUBLIC_IP
+    User ubuntu
+    IdentityFile ~/Downloads/3-tier-app.pem
+    IdentitiesOnly yes
+
+Host shoplite-backend
+    HostName 10.20.2.20
+    User ubuntu
+    IdentityFile ~/Downloads/3-tier-app.pem
+    IdentitiesOnly yes
+    ProxyJump shoplite-edge
+
+Host shoplite-db
+    HostName 10.20.2.30
+    User ubuntu
+    IdentityFile ~/Downloads/3-tier-app.pem
+    IdentitiesOnly yes
+    ProxyJump shoplite-edge
+```
+
+Set restrictive permissions and connect using the aliases:
+
+```sh
+chmod 400 ~/Downloads/3-tier-app.pem
+chmod 600 ~/.ssh/config
+ssh shoplite-edge
+ssh shoplite-backend
+ssh shoplite-db
+```
+
+The Terraform key pair (`key_name`) must be attached to all three instances. The edge security group allows outbound SSH only to the backend and database security groups; their inbound SSH rules accept connections only from the edge security group. If these rules were added after the initial deployment, run `terraform apply` from `infra/terraform` before using `ProxyJump`. Do not copy the private key to EC2-1.
 
 On each host, the `shoplite-net` user-defined Docker network is created. Inspect status with `sudo docker ps` and `sudo docker network inspect shoplite-net`. On EC2-3, confirm persistence with `sudo docker volume inspect shoplite-postgres-data`.
 
