@@ -293,10 +293,57 @@ The architecture diagram above documents the intended design; added deployment s
 ![Some product added on the site](screenshots/product added.jpg)
  
 
-docker ps output on each EC2
-docker network ls and docker network inspect output on each EC2
-docker volume ls and docker volume inspect output on EC2-3
-Inbound rules of every Security Group
+#### Docker containers on each EC2 instance
+
+**EC2-1 — frontend**
+
+![Docker containers on EC2-1](<screenshots/dockerps ec2-1.jpg>)
+
+**EC2-2 — backend**
+
+![Docker containers on EC2-2](<screenshots/dockerps ec2-2.jpg>)
+
+**EC2-3 — database**
+
+![Docker containers on EC2-3](<screenshots/dockerps ec2-3.jpg>)
+
+#### Docker network on each EC2 instance
+
+The screenshots show `shoplite-net` on each host. These user-defined bridge networks are local to their EC2 host; cross-instance traffic uses private IPs.
+
+**EC2-1 — frontend**
+
+![Docker network on EC2-1](<screenshots/dockernetwok ec2-1.jpg>)
+
+**EC2-2 — backend**
+
+![Docker network on EC2-2](<screenshots/dockernetwork ec2-2.jpg>)
+
+**EC2-3 — database**
+
+![Docker network on EC2-3](<screenshots/dockernetwork ec2-3.jpg>)
+
+#### Docker volume on EC2-3
+
+The database container stores PostgreSQL data in the named volume `shoplite-postgres-data`.
+
+![Docker volume list and inspect output on EC2-3](<screenshots/dockervolume.jpg>)
+
+
+#### Inbound rules for all three security groups
+
+**EC2-1 — edge**
+
+![Inbound rules for the ShopLite edge security group](<screenshots/sg-1.jpg>)
+
+**EC2-2 — backend**
+
+![Inbound rules for the ShopLite backend security group](<screenshots/sg-2.jpg>)
+
+**EC2-3 — database**
+
+![Inbound rules for the ShopLite database security group](<screenshots/sg-3.jpg>)
+
 EC2-3 details showing no public IP
 A product still present after the database container is removed and started again
 
