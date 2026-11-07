@@ -216,6 +216,24 @@ resource "aws_vpc_security_group_egress_rule" "edge_to_backend" {
   description                  = "Proxy API traffic to EC2-2."
 }
 
+resource "aws_vpc_security_group_egress_rule" "edge_ssh_to_backend" {
+  security_group_id            = aws_security_group.edge.id
+  referenced_security_group_id = aws_security_group.backend.id
+  from_port                    = 22
+  to_port                      = 22
+  ip_protocol                  = "tcp"
+  description                  = "SSH administration to EC2-2."
+}
+
+resource "aws_vpc_security_group_egress_rule" "edge_ssh_to_database" {
+  security_group_id            = aws_security_group.edge.id
+  referenced_security_group_id = aws_security_group.database.id
+  from_port                    = 22
+  to_port                      = 22
+  ip_protocol                  = "tcp"
+  description                  = "SSH administration to EC2-3."
+}
+
 resource "aws_vpc_security_group_egress_rule" "backend_web" {
   for_each = toset(["80", "443"])
 

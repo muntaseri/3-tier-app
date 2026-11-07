@@ -132,7 +132,15 @@ terraform output
 terraform output -raw frontend_public_ip
 terraform output -raw backend_private_ip
 terraform output -raw database_private_ip
+
 ```
+
+```
+backend_private_ip = "10.20.2.20"
+database_private_ip = "10.20.2.30"
+frontend_public_ip = "184.35.26.65"
+```
+
 
 Use the public IP to open the app and the private IPs for troubleshooting or SSH through the jump host. Bootstrap installs Docker on all hosts. EC2-1 installs Nginx directly on Ubuntu (not in a container), configures it from [`deploy/nginx/shoplite.conf.tftpl`](deploy/nginx/shoplite.conf.tftpl), and runs the frontend image. EC2-2 runs the API image. EC2-3 runs PostgreSQL with the named volume `shoplite-postgres-data`.
 
@@ -150,10 +158,14 @@ The health endpoint returns `200` only when the API can query PostgreSQL. A `503
 For administration, SSH to EC2-1 from the allowed CIDR and use it as a jump host to reach the private instances:
 
 ```sh
-ssh -i /path/to/your-key.pem ubuntu@FRONTEND_PUBLIC_IP
-ssh -i /path/to/your-key.pem -J ubuntu@FRONTEND_PUBLIC_IP ubuntu@BACKEND_PRIVATE_IP
-ssh -i /path/to/your-key.pem -J ubuntu@FRONTEND_PUBLIC_IP ubuntu@DATABASE_PRIVATE_IP
+
+ssh -i 3-tier-app.pem ubuntu@184.35.26.65
+ssh -i 3-tier-app.pem -J ubuntu@184.35.26.65 ubuntu@10.20.2.20
+ssh -i 3-tier-app.pem -J ubuntu@184.35.26.65 ubuntu@10.20.2.30
+
 ```
+
+The edge security group allows outbound SSH only to the backend and database security groups; their inbound SSH rules accept connections only from the edge security group. If this Terraform configuration was updated after the infrastructure was created, run `terraform apply` from `infra/terraform` to add these rules before using `ProxyJump`. Keep the private key on your computer; do not copy it to EC2-1. The key pair selected by `key_name` must also be attached to the private instances.
 
 On each host, the `shoplite-net` user-defined Docker network is created. Inspect status with `sudo docker ps` and `sudo docker network inspect shoplite-net`. On EC2-3, confirm persistence with `sudo docker volume inspect shoplite-postgres-data`.
 
@@ -181,6 +193,7 @@ Terraform deletion removes the EC2 instances and their local Docker data, includ
 | EC2-3 database | TCP 5432 only from EC2-2 security group; TCP 22 only from EC2-1 security group | PostgreSQL is reachable only from the backend; administration via jump host |
 
 Security groups are stateful. No inbound database rule references a public CIDR. Private EC2 instances have no public IP. Docker publishes PostgreSQL only on EC2-3's private address, not `0.0.0.0`.
+The edge host's outbound SSH access is limited to EC2-2 and EC2-3 security groups for jump-host administration; it does not permit SSH egress to arbitrary internet hosts.
 
 ## Assignment scenario questions
 
@@ -243,8 +256,10 @@ https://hub.docker.com/repository/docker/muntaseri/shoplite-backend/tags/v1.0.1/
 
 The architecture diagram above documents the intended design; added deployment screenshots under `screenshots/` and embed them here. Recommended evidence:
 
+![The running application in the browser](screenshots/running frontend on aws.jpg) 
+![Some product added on the site](screenshots/product added.jpg)
+ 
 
-The running application in the browser
 docker ps output on each EC2
 docker network ls and docker network inspect output on each EC2
 docker volume ls and docker volume inspect output on EC2-3
@@ -255,8 +270,7 @@ A product still present after the database container is removed and started agai
 
 
 
-1. `shoplite-products.png` — browser showing products and a newly added product.
-2. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
-3. `docker-containers.png` — running containers and the named database volume.
+1. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
+2. `docker-containers.png` — running containers and the named database volume.
 
 Do not include account credentials, access keys, private keys, passwords, or other secrets in screenshots.
