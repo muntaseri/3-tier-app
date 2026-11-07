@@ -6,24 +6,7 @@ ShopLite is a product catalogue with a dynamic React frontend, a Node.js/Express
 
 ## Architecture
 
-```text
-Browser
-  | HTTP :80
-  v
-EC2-1 (public subnet; public IP)
-  Host Nginx :80
-  ├── /       -> React container at 127.0.0.1:8080
-  └── /api/*  -> EC2-2 private IP :3000
-                       |
-                       v
-              EC2-2 (private subnet; no public IP)
-              Node.js API container :3000
-                       |
-                       | PostgreSQL :5432 over VPC private IPs
-                       v
-              EC2-3 (private subnet; no public IP)
-              PostgreSQL container + named Docker volume
-```
+![ShopLite AWS EC2 deployment architecture](screenshots/deployment-architecture.svg)
 
 Each host creates its own user-defined Docker network. Docker networks are host-local; EC2-2 reaches PostgreSQL using EC2-3's private IP. A NAT Gateway provides outbound-only access for private hosts to install OS updates and pull public Docker Hub images. It does not expose the database to inbound internet connections.
 
@@ -95,14 +78,17 @@ Create public Docker Hub repositories named `shoplite-frontend` and `shoplite-ba
 ```sh
 docker login
 docker buildx build --platform linux/amd64 \
-  -t YOUR_DOCKERHUB_USERNAME/shoplite-frontend:v1.0.0 \
+  -t muntaseri/shoplite-frontend:v1.0.0 \
   --push ./frontend
 docker buildx build --platform linux/amd64 \
-  -t YOUR_DOCKERHUB_USERNAME/shoplite-backend:v1.0.0 \
+  -t muntaseri/shoplite-backend:v1.0.0 \
   --push ./backend
 ```
 
 The Dockerfiles use runtime-only images/artifacts. Docker Hub images must be public so EC2 can pull them without storing registry credentials.
+
+
+
 
 ## Deploy to AWS
 
@@ -207,7 +193,7 @@ The instance initiates HTTPS connections to package repositories through NAT. NA
 Keep the previous image tag available and immutable. On EC2-2, pull the previous image and recreate only the API container with its existing environment settings, Docker network, and restart policy:
 
 ```sh
-sudo docker pull YOUR_DOCKERHUB_USERNAME/shoplite-backend:v1.0.0
+sudo docker pull muntaseri/shoplite-backend:v1.0.0
 sudo docker rm -f shoplite-backend
 sudo docker run -d \
   --name shoplite-backend \
@@ -215,7 +201,7 @@ sudo docker run -d \
   --restart unless-stopped \
   -p 10.20.2.20:3000:3000 \
   --env-file /etc/shoplite/backend.env \
-  YOUR_DOCKERHUB_USERNAME/shoplite-backend:v1.0.0
+  muntaseri/shoplite-backend:v1.0.0
 ```
 
 Replace `v1.0.0` with the previous known-good tag. The database container and named volume remain untouched. Verify `/api/health`, list products, and test a new product through EC2-1. For a repeatable release process, maintain the exact image tags and deployment parameters for the current and prior release; never use `latest` as the rollback reference.
@@ -228,13 +214,24 @@ Anyone on the internet could attempt to connect to PostgreSQL, exploit weak or l
 
 The single API instance is likely to saturate first because every request and database operation passes through it; the single PostgreSQL instance and its connection capacity may become the next bottleneck. Measure CPU, memory, request latency, connection counts, and database I/O before changing capacity. Then run multiple API instances behind a load balancer, make API instances stateless, add health checks and controlled rollout, and size or partition database capacity based on measured load. If the assignment's no-managed-database constraint still applies, consider a carefully operated PostgreSQL primary/replica or sharding only when justified; otherwise a managed database and managed load balancer would reduce operational risk. Add caching for read-heavy catalogue traffic and static asset caching/CDN as appropriate.
 
+
+### Dockrhub image link
+
+https://hub.docker.com/repository/docker/muntaseri/shoplite-frontend/tags/v1.0.1/sha256-f5ca339237ec17202b319d13085fe2139ad2271e111c27d61c98bbe805df3432
+
+https://hub.docker.com/repository/docker/muntaseri/shoplite-backend/tags/v1.0.1/sha256:947a0dd890c317489a44281fe9e37b9c717bc50a47bd3f5f7126a9a275433193
+
+
+
 ## Screenshots to add before submission
 
-Real deployment screenshots cannot be captured until you deploy into your own AWS account. Add genuine screenshots under `docs/screenshots/` and embed them here before submitting. Recommended evidence:
 
-1. `architecture.png` — your deployed architecture or Terraform resources.
-2. `shoplite-products.png` — browser showing products and a newly added product.
-3. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
-4. `docker-containers.png` — running containers and the named database volume.
+
+
+The architecture diagram above documents the intended design; it is not evidence that AWS resources have been deployed. Add genuine deployment screenshots under `screenshots/` and embed them here before submitting. Recommended evidence:
+
+1. `shoplite-products.png` — browser showing products and a newly added product.
+2. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
+3. `docker-containers.png` — running containers and the named database volume.
 
 Do not include account credentials, access keys, private keys, passwords, or other secrets in screenshots.

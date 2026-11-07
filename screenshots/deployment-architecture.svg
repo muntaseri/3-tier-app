@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title description">
+  <title id="title">ShopLite AWS EC2 deployment architecture diagram</title>
+  <desc id="description">A browser reaches host Nginx on a public EC2 instance. Nginx serves the React frontend and proxies API requests to a private backend EC2 instance. The backend connects to PostgreSQL on a private EC2 instance with a named Docker volume. Security groups restrict each connection. Private hosts use a NAT Gateway for outbound image pulls and updates. GitHub Actions publishes versioned images to Docker Hub.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8faf8"/>
+      <stop offset="1" stop-color="#edf3ee"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#28684c"/>
+      <stop offset="1" stop-color="#174834"/>
+    </linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#173d2d" flood-opacity=".10"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#28744f"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#557992"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#bd7931"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #20372c; }
+      .title { font-size: 34px; font-weight: 750; letter-spacing: -1px; }
+      .subtitle { font-size: 15px; fill: #60736a; }
+      .lane-title { font-size: 16px; font-weight: 700; }
+      .lane-note { font-size: 12px; fill: #718078; }
+      .card-title { font-size: 18px; font-weight: 750; }
+      .card-sub { font-size: 12px; fill: #60736a; }
+      .small { font-size: 11px; fill: #60736a; }
+      .micro { font-size: 10px; fill: #63756c; }
+      .white { fill: #fff; }
+      .white-sub { fill: #dcebe1; }
+      .badge { font-size: 10px; font-weight: 700; letter-spacing: .45px; }
+      .line { fill: none; stroke: #28744f; stroke-width: 3; marker-end: url(#arrow); }
+      .line-blue { fill: none; stroke: #557992; stroke-width: 2.5; marker-end: url(#arrow-blue); }
+      .line-orange { fill: none; stroke: #bd7931; stroke-width: 2.5; stroke-dasharray: 8 7; marker-end: url(#arrow-orange); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#background)"/>
+  <circle cx="1510" cy="50" r="130" fill="#dfebdd" opacity=".55"/>
+  <circle cx="45" cy="950" r="155" fill="#e1eadf" opacity=".55"/>
+
+  <text x="54" y="61" class="title">ShopLite · AWS deployment</text>
+  <text x="56" y="90" class="subtitle">Three EC2 tiers · private database · Docker Hub images · Terraform-managed network</text>
+  <g transform="translate(1040 46)">
+    <rect width="500" height="60" rx="14" fill="#fff" stroke="#e0e8e1"/>
+    <circle cx="24" cy="21" r="5" fill="#28744f"/>
+    <text x="38" y="25" class="small">Application traffic</text>
+    <circle cx="183" cy="21" r="5" fill="#bd7931"/>
+    <text x="197" y="25" class="small">Outbound-only downloads</text>
+    <circle cx="24" cy="43" r="5" fill="#557992"/>
+    <text x="38" y="47" class="small">Image publishing</text>
+    <text x="183" y="47" class="small">Security groups restrict every tier hop</text>
+  </g>
+
+  <!-- Build and registry flow -->
+  <g filter="url(#shadow)">
+    <rect x="54" y="125" width="300" height="90" rx="16" fill="#fff" stroke="#dce6df"/>
+    <rect x="69" y="143" width="44" height="44" rx="12" fill="#edf2fc"/>
+    <path d="M80 165h22M91 154v22M82 157l18 17M100 157l-18 17" stroke="#526fa1" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="126" y="157" class="card-title" font-size="16">GitHub Actions</text>
+    <text x="126" y="178" class="card-sub">Builds frontend + API images</text>
+    <text x="126" y="196" class="micro">Release tags: v1.0.x</text>
+
+    <rect x="410" y="125" width="300" height="90" rx="16" fill="#fff" stroke="#dce6df"/>
+    <rect x="426" y="143" width="44" height="44" rx="12" fill="#e9f4f8"/>
+    <path d="M438 169c-5 0-8-4-8-8s4-8 9-8c2-6 10-8 15-3 6-1 11 4 11 10 0 5-4 9-9 9z" fill="#2784a8"/>
+    <text x="483" y="157" class="card-title" font-size="16">Docker Hub</text>
+    <text x="483" y="178" class="card-sub">shoplite-frontend:v1.0.1</text>
+    <text x="483" y="196" class="card-sub">shoplite-backend:v1.0.1</text>
+  </g>
+  <path d="M355 170H401" class="line-blue"/>
+  <text x="369" y="157" class="micro">push</text>
+
+  <!-- Internet client -->
+  <g>
+    <rect x="787" y="125" width="195" height="76" rx="16" fill="#fff" stroke="#dce6df" filter="url(#shadow)"/>
+    <circle cx="817" cy="163" r="18" fill="#edf4e9"/>
+    <circle cx="817" cy="157" r="6" fill="none" stroke="#54785d" stroke-width="2"/>
+    <path d="M805 174c2-8 22-8 24 0" fill="none" stroke="#54785d" stroke-width="2" stroke-linecap="round"/>
+    <text x="846" y="158" class="card-title" font-size="16">Browser</text>
+    <text x="846" y="178" class="card-sub">Public HTTP · port 80</text>
+  </g>
+
+  <!-- VPC boundary and subnets -->
+  <rect x="40" y="240" width="1520" height="700" rx="24" fill="#fff" fill-opacity=".72" stroke="#739581" stroke-width="2.3"/>
+  <rect x="62" y="227" width="355" height="30" rx="10" fill="#28684c"/>
+  <text x="78" y="248" class="white" font-size="14" font-weight="750">AWS VPC · 10.20.0.0/16</text>
+  <text x="1375" y="250" class="small">One Availability Zone</text>
+
+  <rect x="62" y="274" width="440" height="638" rx="19" fill="#f3f8f2" stroke="#b8cdbb" stroke-width="1.5"/>
+  <rect x="522" y="274" width="1016" height="638" rx="19" fill="#f3f6fa" stroke="#bac8d7" stroke-width="1.5"/>
+  <text x="84" y="308" class="lane-title">Public subnet · 10.20.1.0/24</text>
+  <text x="84" y="328" class="lane-note">Internet Gateway route · EC2-1 public IP</text>
+  <text x="546" y="308" class="lane-title">Private subnet · 10.20.2.0/24</text>
+  <text x="546" y="328" class="lane-note">No public IPs · private hosts use NAT for outbound access only</text>
+
+  <!-- Internet gateway -->
+  <g>
+    <rect x="310" y="350" width="187" height="64" rx="13" fill="#e9f2e7" stroke="#aec4ae"/>
+    <circle cx="334" cy="382" r="14" fill="#fff"/>
+    <path d="M325 382h18M334 373c-5 5-5 13 0 18M334 373c5 5 5 13 0 18" fill="none" stroke="#528060" stroke-width="1.5"/>
+    <text x="358" y="378" class="card-title" font-size="14">Internet Gateway</text>
+    <text x="358" y="397" class="micro">Public route to VPC</text>
+  </g>
+  <path d="M885 202V260H403V340" class="line"/>
+  <text x="620" y="252" class="small">HTTP :80</text>
+
+  <!-- EC2-1 public -->
+  <g filter="url(#shadow)">
+    <rect x="88" y="444" width="386" height="257" rx="19" fill="#fff" stroke="#a9c5ad" stroke-width="1.5"/>
+    <rect x="88" y="444" width="386" height="56" rx="19" fill="url(#green)"/>
+    <path d="M88 481h386v19H88z" fill="url(#green)"/>
+    <text x="111" y="470" class="white" font-size="11" font-weight="700" letter-spacing=".8">EC2-1 · PUBLIC EDGE</text>
+    <text x="111" y="490" class="white-sub" font-size="11">Ubuntu · public IPv4 · SG: HTTP :80 from internet</text>
+    <rect x="111" y="519" width="340" height="65" rx="12" fill="#edf4eb"/>
+    <text x="128" y="544" class="card-title" font-size="16">Host Nginx · installed on EC2</text>
+    <text x="128" y="564" class="card-sub">/ → 127.0.0.1:8080 · /api/* → EC2-2:3000</text>
+    <rect x="111" y="599" width="340" height="77" rx="12" fill="#f5f7f4" stroke="#e1e9e1"/>
+    <circle cx="142" cy="637" r="20" fill="#dbe9ca"/>
+    <text x="136" y="644" font-size="21" font-weight="800" fill="#315c44">R</text>
+    <text x="174" y="630" class="card-title" font-size="15">React frontend container</text>
+    <text x="174" y="650" class="card-sub">Docker network: shoplite-net</text>
+    <text x="174" y="666" class="micro">Published only on 127.0.0.1:8080</text>
+  </g>
+
+  <path d="M403 415V436" class="line"/>
+  <text x="412" y="435" class="micro">public IP</text>
+
+  <!-- Backend -->
+  <g filter="url(#shadow)">
+    <rect x="578" y="409" width="396" height="252" rx="19" fill="#fff" stroke="#b3c5d6" stroke-width="1.5"/>
+    <rect x="578" y="409" width="396" height="56" rx="19" fill="#315d79"/>
+    <path d="M578 446h396v19H578z" fill="#315d79"/>
+    <text x="601" y="435" class="white" font-size="11" font-weight="700" letter-spacing=".8">EC2-2 · BACKEND</text>
+    <text x="601" y="455" class="white-sub" font-size="11">Private IP 10.20.2.20 · no public IP · SG: from EC2-1 only</text>
+    <rect x="602" y="486" width="347" height="94" rx="13" fill="#eef3f8"/>
+    <circle cx="636" cy="532" r="22" fill="#d8e6f0"/>
+    <path d="M627 524h18M627 531h18M627 538h12" stroke="#426b88" stroke-width="2" stroke-linecap="round"/>
+    <text x="673" y="522" class="card-title" font-size="16">Node.js / Express API</text>
+    <text x="673" y="544" class="card-sub">Container · port 3000</text>
+    <text x="673" y="563" class="micro">GET/POST /api/products · DB config via env file</text>
+    <rect x="602" y="596" width="347" height="42" rx="10" fill="#f8fafb" stroke="#e3eaf0"/>
+    <text x="620" y="622" class="small">User-defined Docker network: shoplite-net</text>
+  </g>
+
+  <!-- Database -->
+  <g filter="url(#shadow)">
+    <rect x="1082" y="409" width="405" height="252" rx="19" fill="#fff" stroke="#d3c3a9" stroke-width="1.5"/>
+    <rect x="1082" y="409" width="405" height="56" rx="19" fill="#876544"/>
+    <path d="M1082 446h405v19h-405z" fill="#876544"/>
+    <text x="1105" y="435" class="white" font-size="11" font-weight="700" letter-spacing=".8">EC2-3 · DATABASE</text>
+    <text x="1105" y="455" class="white-sub" font-size="11">Private IP 10.20.2.30 · no public IP · SG: from EC2-2 only</text>
+    <rect x="1106" y="486" width="357" height="91" rx="13" fill="#f6f1e9"/>
+    <ellipse cx="1143" cy="518" rx="20" ry="8" fill="#c6a77d"/>
+    <path d="M1123 518v23c0 5 9 9 20 9s20-4 20-9v-23" fill="#dec8a8" stroke="#b28a5c" stroke-width="1.5"/>
+    <ellipse cx="1143" cy="541" rx="20" ry="8" fill="#d5bb98" stroke="#b28a5c" stroke-width="1.5"/>
+    <ellipse cx="1143" cy="518" rx="20" ry="8" fill="#e9d8bd" stroke="#b28a5c" stroke-width="1.5"/>
+    <text x="1180" y="519" class="card-title" font-size="16">PostgreSQL container</text>
+    <text x="1180" y="541" class="card-sub">Private port 5432 · postgres:16-alpine</text>
+    <text x="1180" y="559" class="micro">Never exposed to public internet</text>
+    <rect x="1106" y="592" width="357" height="48" rx="11" fill="#fffaf2" stroke="#eadfcf"/>
+    <path d="M1127 607h21l5 6v15h-26z" fill="#d9c09c" stroke="#a98456"/>
+    <text x="1165" y="612" class="card-title" font-size="13">Named volume</text>
+    <text x="1165" y="629" class="card-sub">shoplite-postgres-data · survives container restart</text>
+  </g>
+
+  <!-- Application traffic path -->
+  <path d="M475 555H565" class="line"/>
+  <rect x="477" y="514" width="88" height="30" rx="9" fill="#fff" stroke="#dce6df"/>
+  <text x="488" y="534" class="badge" fill="#28684c">/api · :3000</text>
+  <path d="M974 532H1069" class="line"/>
+  <rect x="984" y="490" width="77" height="30" rx="9" fill="#fff" stroke="#dce6df"/>
+  <text x="994" y="510" class="badge" fill="#28684c">:5432</text>
+
+  <!-- NAT gateway and downloads -->
+  <g>
+    <rect x="93" y="750" width="380" height="120" rx="16" fill="#fffaf2" stroke="#e2c99e" stroke-width="1.5"/>
+    <circle cx="125" cy="788" r="17" fill="#f5e6ca"/>
+    <path d="M116 788h18M125 779c-5 5-5 13 0 18M125 779c5 5 5 13 0 18" fill="none" stroke="#aa7737" stroke-width="1.6"/>
+    <text x="154" y="785" class="card-title" font-size="15">NAT Gateway</text>
+    <text x="154" y="806" class="card-sub">Private subnet outbound route</text>
+    <text x="112" y="837" class="micro">Docker Hub pulls + OS updates via IGW; no unsolicited inbound sessions</text>
+  </g>
+  <path d="M780 661V678H514" class="line-orange"/>
+  <path d="M1280 661V678H514" class="line-orange"/>
+  <path d="M514 678V810H473" class="line-orange"/>
+  <text x="546" y="675" class="micro">Private subnet default route · outbound only</text>
+
+  <!-- Security group callouts -->
+  <g>
+    <rect x="578" y="692" width="909" height="54" rx="13" fill="#edf3f7" stroke="#d4e0e8"/>
+    <path d="M603 710l13-6 13 6v10c0 9-7 15-13 18-6-3-13-9-13-18z" fill="#6b8ca2"/>
+    <path d="M610 720l4 4 8-9" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="642" y="715" class="badge" fill="#315d79">LEAST-PRIVILEGE SECURITY GROUPS</text>
+    <text x="642" y="735" class="small">Internet → EC2-1 :80 · EC2-1 → EC2-2 :3000 · EC2-2 → EC2-3 :5432</text>
+    <text x="1282" y="725" class="micro">DB: no public ingress</text>
+  </g>
+
+  <!-- Per-host network note -->
+  <g>
+    <rect x="578" y="770" width="909" height="75" rx="13" fill="#fff" stroke="#e0e6e2"/>
+    <text x="602" y="797" class="badge" fill="#28684c">DOCKER NETWORKING</text>
+    <text x="602" y="820" class="small">Each EC2 host creates its own user-defined shoplite-net. These bridges are host-local;</text>
+    <text x="602" y="837" class="small">inter-host API and database connections use private IPs and the restricted security groups.</text>
+  </g>
+
+  <text x="55" y="972" class="micro">ShopLite assignment reference · HTTP shown for demo; use TLS for production deployments.</text>
+  <text x="1297" y="972" class="micro">Provisioned with Terraform</text>
+</svg>
