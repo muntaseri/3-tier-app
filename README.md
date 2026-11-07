@@ -97,7 +97,7 @@ The Dockerfiles use runtime-only images/artifacts. Docker Hub images must be pub
 - An AWS account and AWS CLI credentials configured locally.
 - Terraform 1.5+ and an EC2 key pair already created in the target region.
 - The two public, version-tagged Docker Hub images built above.
-- A known public IPv4 CIDR for SSH administration, such as `203.0.113.10/32`. Do not use `0.0.0.0/0` for SSH.
+- A known public IPv4 CIDR for SSH administration, such as `laptop public IP/32`. Do not use `0.0.0.0/0` for SSH.
 
 Terraform creates a VPC, one public subnet, one private subnet, an internet gateway, a NAT Gateway, three EC2 instances, and security groups. The private subnet has a default route through NAT for outbound package/image downloads; it has no inbound internet route. The database instance has no public IP.
 
@@ -112,7 +112,7 @@ Edit `terraform.tfvars`:
 
 - Set `aws_region`, `key_name`, and your restricted `ssh_cidr`.
 - Set the exact version-tagged image names from your public Docker Hub repositories.
-- Set a unique `db_password` with at least 16 characters, using letters, digits, `_`, or `-`.
+- Set a unique `db_password` with at least 24 characters, using letters, digits, `_`, or `-`.
 
 The password is marked sensitive but is included in Terraform state and EC2 user data so the backend can connect to PostgreSQL. Keep state local and access-restricted, never commit `terraform.tfvars`, state, plans, or user-data output. For a shared deployment, use an encrypted, access-controlled remote state backend and a secret-management design. Changing `db_password` through Terraform replaces the database instance; back up and plan a coordinated credential rotation before changing it because the database volume is attached to that instance.
 
@@ -146,29 +146,29 @@ Use the public IP to open the app and the private IPs for troubleshooting or SSH
 
 ### 3. Verify
 
-Visit `http://FRONTEND_PUBLIC_IP/`. Add a product and refresh the page; the product should remain. Check API/database readiness:
+Visit `http://184.35.26.65/`. Add a product and refresh the page; the product should remain. Check API/database readiness:
 
 ```sh
-curl http://FRONTEND_PUBLIC_IP/api/health
-curl http://FRONTEND_PUBLIC_IP/api/products
+curl http://184.35.26.65/api/health
+curl http://184.35.26.65/api/products
 ```
 
 The health endpoint returns `200` only when the API can query PostgreSQL. A `503` indicates the API is up but the database is not ready or reachable.
 
 For administration, keep the EC2 private key on your computer and use SSH `ProxyJump` through EC2-1. Get the addresses from Terraform:
 
-```sh
-cd infra/terraform
-terraform output -raw frontend_public_ip
-terraform output -raw backend_private_ip
-terraform output -raw database_private_ip
 ```
+backend_private_ip = "10.20.2.20"
+database_private_ip = "10.20.2.30"
+frontend_public_ip = "184.35.26.65"
+```
+
 
 Append these entries to `~/.ssh/config`, replacing the example key path with the path to your EC2 `.pem` key and the public IP with the `frontend_public_ip` output. The private addresses below match the Terraform defaults; use the output values if they differ.
 
 ```sshconfig
 Host shoplite-edge
-    HostName FRONTEND_PUBLIC_IP
+    HostName 184.35.26.65
     User ubuntu
     IdentityFile ~/Downloads/3-tier-app.pem
     IdentitiesOnly yes
@@ -234,14 +234,14 @@ The edge host's outbound SSH access is limited to EC2-2 and EC2-3 security group
 
 Start at the failing boundary and move inward. In the browser's network panel, inspect the failing `/api` URL and response. If the frontend container is restarting, inspect `sudo docker logs --tail 100 shoplite-frontend`; an Nginx error such as `host not found in upstream "backend"` means the frontend container is trying to resolve the backend by a Docker service name that is unavailable across EC2 hosts. The updated frontend Nginx config resolves that name at request time, while EC2-1's host Nginx sends `/api/*` directly to EC2-2's private IP. Publish and deploy a new frontend image version after applying that fix.
 
-Then on EC2-1 check `sudo nginx -t`, `sudo systemctl status nginx`, and `sudo tail -n 100 /var/log/nginx/error.log`; verify the host Nginx upstream points to EC2-2's current private IP. From EC2-1, test `curl http://BACKEND_PRIVATE_IP:3000/api/health`. On EC2-2, inspect `sudo docker ps`, `sudo docker logs shoplite-backend`, the `shoplite-net` network, and the container's DB host, username, database, and password settings. From EC2-2, test the database's private IP on port 5432. On EC2-3, check the PostgreSQL container, logs, volume, and free disk space. Confirm security-group rules allow only edge-to-backend and backend-to-database traffic. Fix the specific broken hop, then recheck health and products through the public URL; do not expose PostgreSQL to troubleshoot.
+Then on EC2-1 check `sudo nginx -t`, `sudo systemctl status nginx`, and `sudo tail -n 100 /var/log/nginx/error.log`; verify the host Nginx upstream points to EC2-2's current private IP. From EC2-1, test `curl http://184.35.26.65:3000/api/health`. On EC2-2, inspect `sudo docker ps`, `sudo docker logs shoplite-backend`, the `shoplite-net` network, and the container's DB host, username, database, and password settings. From EC2-2, test the database's private IP on port 5432. On EC2-3, check the PostgreSQL container, logs, volume, and free disk space. Confirm security-group rules allow only edge-to-backend and backend-to-database traffic. Fix the specific broken hop, then recheck health and products through the public URL; do not expose PostgreSQL to troubleshoot.
 
 ### Q2. How can EC2-3 receive OS patches without breaking the database security rule?
 
 The private subnet routes outbound traffic through the NAT Gateway. An administrator connects through the restricted EC2-1 jump host and runs the OS package manager on EC2-3:
 
 ```sh
-ssh -i /path/to/your-key.pem -J ubuntu@FRONTEND_PUBLIC_IP ubuntu@DATABASE_PRIVATE_IP
+ssh shoplite-db
 sudo apt-get update && sudo apt-get upgrade -y
 ```
 
@@ -263,7 +263,7 @@ sudo docker run -d \
   muntaseri/shoplite-backend:v1.0.0
 ```
 
-Replace `v1.0.0` with the previous known-good tag. The database container and named volume remain untouched. Verify `/api/health`, list products, and test a new product through EC2-1. For a repeatable release process, maintain the exact image tags and deployment parameters for the current and prior release; never use `latest` as the rollback reference.
+As `v1.0.0` with the previous known-good tag. The database container and named volume remain untouched. Verify `/api/health`, list products, and test a new product through EC2-1. For a repeatable release process, maintain the exact image tags and deployment parameters for the current and prior release; never use `latest` as the rollback reference.
 
 ### Q4. Teammate opens PostgreSQL to `0.0.0.0/0`
 
@@ -282,7 +282,7 @@ https://hub.docker.com/repository/docker/muntaseri/shoplite-backend/tags/v1.0.1/
 
 
 
-## Screenshots to add before submission
+## Screenshots from aws cloud before submission
 
 
 
@@ -344,13 +344,28 @@ The database container stores PostgreSQL data in the named volume `shoplite-post
 
 ![Inbound rules for the ShopLite database security group](<screenshots/sg-3.jpg>)
 
-EC2-3 details showing no public IP
-A product still present after the database container is removed and started again
+#### EC2-3 has no public IP
+
+The EC2 instance details show that the database host has no public IPv4 address and only its private address (`10.20.2.30`).
+
+![EC2-3 database instance details showing no public IP](<screenshots/nopublicip.jpg>)
+
+#### Product data persists after recreating the database container
+
+The first screenshot shows the PostgreSQL container being removed and recreated with the existing named volume. The second shows the ShopLite catalogue still displaying the products afterward.
+
+**Database container removed and recreated with `shoplite-postgres-data`**
+
+![PostgreSQL container recreation while reusing the named volume](<screenshots/containerrm.jpg>)
+
+**Products still visible in the application**
+
+![ShopLite products still visible after database container recreation](<screenshots/app with db sustained.jpg>)
 
 
 
 
-1. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
-2. `docker-containers.png` — running containers and the named database volume.
 
-Do not include account credentials, access keys, private keys, passwords, or other secrets in screenshots.
+
+
+Note: Do not include account credentials, access keys, private keys, passwords, or other secrets in screenshots.
