@@ -1,0 +1,110 @@
+:root {
+  font-family: "DM Sans", "Avenir Next", sans-serif;
+  color: #23322c;
+  background: #f5f6f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #23322c;
+  --muted: #79837d;
+  --green: #245c45;
+  --line: #e1e5de;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; }
+button, input { font: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.page-shell { max-width: 1320px; margin: 0 auto; padding: 0 7.1%; }
+.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; gap: 9px; align-items: center; font: 800 20px "Avenir Next", sans-serif; letter-spacing: -1px; }
+.brand-mark { width: 29px; height: 29px; display: inline-grid; place-items: center; border-radius: 9px 9px 9px 2px; color: white; background: var(--green); font: 800 20px "Avenir Next", sans-serif; }
+.topbar-note, .cart-count { color: var(--muted); font-size: 12px; }
+.cart-count { border: 1px solid var(--line); border-radius: 30px; padding: 8px 13px; }
+
+.hero { min-height: 485px; display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 6%; padding: 57px 0 60px; }
+.eyebrow { margin: 0 0 16px; color: #7d8b7f; font-size: 10px; font-weight: 700; letter-spacing: 1.65px; }
+.hero h1, .add-copy h2 { margin: 0; font: 700 clamp(38px, 5vw, 63px)/1.08 "Avenir Next", sans-serif; letter-spacing: -3.2px; }
+.hero h1 span { color: #8ca773; }
+.hero-description { max-width: 340px; margin: 20px 0 25px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.shop-link { display: inline-flex; gap: 15px; align-items: center; padding-bottom: 5px; border-bottom: 1px solid #9db18d; color: var(--green); font-size: 12px; font-weight: 700; }
+.shop-link span { font-size: 17px; }
+.hero-art { position: relative; min-height: 337px; overflow: hidden; border-radius: 5px; background: #e4ecd8; }
+.sun-disc { position: absolute; width: 275px; height: 275px; top: 24px; right: 33px; border-radius: 50%; background: #d5e5bc; }
+.art-card { position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; font: 800 24px/1.1 "Avenir Next", sans-serif; letter-spacing: 3px; box-shadow: 0 19px 35px #50614721; }
+.art-card-back { width: 153px; height: 204px; top: 74px; left: 18%; transform: rotate(-11deg); color: #315b44; background: #f1eee0; }
+.art-card-front { width: 162px; height: 207px; top: 83px; right: 19%; flex-direction: column; gap: 26px; transform: rotate(9deg); color: #f3f1e4; background: #668b63; font-size: 18px; letter-spacing: 0; }
+.art-sparkle { font-size: 48px; color: #d8ee9a; }
+.art-caption { position: absolute; bottom: 17px; left: 19px; color: #6a7e63; font-size: 8px; letter-spacing: 1.2px; }
+
+.catalogue-section { padding: 45px 0 79px; border-top: 1px solid var(--line); }
+.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 28px; }
+.section-heading .eyebrow { margin-bottom: 9px; }
+.section-heading h2 { margin: 0; font: 700 29px "Avenir Next", sans-serif; letter-spacing: -1.2px; }
+.product-total { color: #9aa39b; font: 500 15px sans-serif; }
+.section-caption { color: var(--muted); font-size: 11px; }
+.product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 17px; }
+.product-card { min-width: 0; padding: 12px; border: 1px solid var(--line); background: #fbfcf9; }
+.product-visual { position: relative; display: grid; place-items: center; height: 205px; overflow: hidden; color: #325f46; background: #e9eee2; }
+.product-visual > span:first-child { font: 800 103px "Avenir Next", sans-serif; opacity: .8; }
+.color-1 .product-visual { color: #8f633f; background: #efe7d9; }
+.color-2 .product-visual { color: #586e83; background: #e5ebee; }
+.color-3 .product-visual { color: #896f84; background: #eee7ed; }
+.visual-spark { position: absolute; top: 20px; right: 22px; font-size: 27px; opacity: .8; }
+.visual-label { position: absolute; bottom: 14px; left: 14px; font-size: 8px; font-weight: 700; line-height: 1.5; letter-spacing: 1px; }
+.product-info { display: flex; justify-content: space-between; gap: 10px; align-items: start; padding: 14px 2px 3px; }
+.product-info h3 { margin: 0 0 5px; font: 700 14px "Avenir Next", sans-serif; }
+.product-info p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.product-info strong { flex: 0 0 auto; color: var(--green); font-size: 11px; }
+.empty-state { display: grid; justify-items: center; padding: 49px 20px; border: 1px dashed #cbd4c8; color: var(--muted); text-align: center; }
+.empty-state h3 { margin: 7px 0 2px; color: var(--ink); font: 700 17px "Avenir Next", sans-serif; }
+.empty-state p { margin: 5px 0 0; font-size: 12px; }
+.retry-button { margin-top: 15px; padding: 9px 13px; border: 0; border-radius: 2px; color: #fff; background: var(--green); cursor: pointer; font-size: 11px; font-weight: 700; }
+.retry-button:hover { background: #194733; }
+.empty-icon { color: #8ca773; font-size: 30px; }
+.notice { margin: 0 0 15px; padding: 11px 14px; font-size: 12px; }
+.error-notice { color: #8d342b; background: #fbecea; }
+
+.add-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10%; padding: 56px 7%; background: #e9eee4; }
+.add-copy h2 { font-size: 38px; letter-spacing: -1.7px; }
+.add-copy > p:last-child { max-width: 280px; margin: 17px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.product-form { display: grid; gap: 13px; }
+.product-form label { display: grid; gap: 6px; color: #55655b; font-size: 10px; font-weight: 700; }
+.product-form input { width: 100%; padding: 11px 12px; outline: 0; border: 1px solid #d5ddd1; border-radius: 2px; color: var(--ink); background: #f9faf7; font-size: 12px; }
+.product-form input:focus { border-color: #708e6a; box-shadow: 0 0 0 2px #708e6a22; }
+.product-form input::placeholder { color: #abb3ac; }
+.optional, .currency-hint { color: #929e95; font-weight: 400; }
+.currency-hint { margin-left: 4px; }
+.product-form button { display: flex; align-items: center; justify-content: space-between; margin-top: 3px; padding: 13px 15px; border: 0; border-radius: 2px; color: #fff; background: var(--green); cursor: pointer; font-size: 11px; font-weight: 700; }
+.product-form button:hover { background: #194733; }
+.product-form button:disabled { cursor: wait; opacity: .65; }
+.product-form button span { font-size: 17px; }
+
+.footer { min-height: 83px; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; }
+.footer-brand { color: var(--ink); font-size: 15px; }
+.footer-brand .brand-mark { width: 23px; height: 23px; font-size: 16px; }
+.footer > span:last-child span { color: #bb7163; }
+
+@media (max-width: 760px) {
+  .page-shell { padding: 0 5%; }
+  .topbar { height: 68px; }
+  .topbar-note { display: none; }
+  .hero { grid-template-columns: 1fr; gap: 28px; padding: 48px 0; }
+  .hero-art { min-height: 290px; }
+  .sun-disc { width: 230px; height: 230px; }
+  .art-card-back { left: 17%; width: 130px; height: 175px; }
+  .art-card-front { right: 18%; width: 137px; height: 177px; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .product-visual { height: 155px; }
+  .add-section { grid-template-columns: 1fr; gap: 26px; padding: 38px 6%; }
+  .section-heading { align-items: start; gap: 12px; }
+  .section-caption { max-width: 120px; text-align: right; line-height: 1.5; }
+}
+
+@media (max-width: 440px) {
+  .product-grid { grid-template-columns: 1fr; }
+  .product-visual { height: 210px; }
+  .footer { flex-wrap: wrap; gap: 10px; padding: 17px 0; }
+  .footer > span:last-child { width: 100%; }
+}

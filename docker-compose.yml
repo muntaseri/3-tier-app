@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shoplite
+      POSTGRES_USER: shoplite
+      POSTGRES_PASSWORD: local-dev-only
+    volumes:
+      - shoplite-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shoplite -d shoplite"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - shoplite-net
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: "3000"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: shoplite
+      DB_USER: shoplite
+      DB_PASSWORD: local-dev-only
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - shoplite-net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - shoplite-net
+
+volumes:
+  shoplite-postgres-data:
+
+networks:
+  shoplite-net:
+    name: shoplite-net
+    driver: bridge

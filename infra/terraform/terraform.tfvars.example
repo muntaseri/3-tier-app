@@ -1,0 +1,6 @@
+aws_region        = "ap-southeast-1"
+key_name          = "replace-with-existing-ec2-key-pair"
+ssh_cidr          = "203.0.113.10/32"
+frontend_image    = "docker.io/your-dockerhub-username/shoplite-frontend:v1.0.0"
+backend_image     = "docker.io/your-dockerhub-username/shoplite-backend:v1.0.0"
+db_password       = "replace-with-unique-16-char-secret"
