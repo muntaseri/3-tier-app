@@ -156,3 +156,4 @@ vite.config.ts.timestamp-*
 *.tfvars
 crash.log
 crash.*.log
+tfplan

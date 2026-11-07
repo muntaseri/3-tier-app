@@ -228,7 +228,19 @@ https://hub.docker.com/repository/docker/muntaseri/shoplite-backend/tags/v1.0.1/
 
 
 
-The architecture diagram above documents the intended design; it is not evidence that AWS resources have been deployed. Add genuine deployment screenshots under `screenshots/` and embed them here before submitting. Recommended evidence:
+The architecture diagram above documents the intended design; added deployment screenshots under `screenshots/` and embed them here. Recommended evidence:
+
+
+The running application in the browser
+docker ps output on each EC2
+docker network ls and docker network inspect output on each EC2
+docker volume ls and docker volume inspect output on EC2-3
+Inbound rules of every Security Group
+EC2-3 details showing no public IP
+A product still present after the database container is removed and started again
+
+
+
 
 1. `shoplite-products.png` — browser showing products and a newly added product.
 2. `private-database.png` — EC2-3 details showing no public IPv4 address and its restricted database security-group rule.
